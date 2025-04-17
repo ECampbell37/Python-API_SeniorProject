@@ -2,6 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import casualLearning
+import freeChat
 
 app = FastAPI()
 
@@ -92,3 +93,20 @@ async def continue_lesson(subject: str = "Astronomy"):
         return {"message": continuation}
     except Exception as e:
         return {"error": str(e)}
+
+
+
+@app.post("/free_chat")
+async def post_free_chat(request: Request):
+    data = await request.json()
+    user_message = data.get("message", "")
+    if not user_message:
+        return {"error": "Missing 'message'"}
+    try:
+        chat_text = freeChat.chat_chain.run({
+            "userResponse": user_message
+        })
+        return {"message": chat_text}
+    except Exception as e:
+        return {"error": str(e)}
+
