@@ -1,76 +1,74 @@
-# Import Libraries
 import os
+import warnings
 
 # Langchain
-from langchain.chains import LLMChain, SimpleSequentialChain, RouterChain, ConversationChain
+from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_community.chat_models import ChatOpenAI
 from langchain.memory import ConversationSummaryMemory
 
+warnings.filterwarnings('ignore')
+
 # Load API key from env variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-
-# Ignore Depreciation Warnings
-import warnings
-warnings.filterwarnings('ignore')
-
-#Define the GPT Model
+# Define the GPT Model
 llm_model = "gpt-3.5-turbo"
-
-#Create the model instance
 llm = ChatOpenAI(temperature=0.7, model=llm_model)
 
-# Initialize model summary memory
-memory = ConversationSummaryMemory(llm=llm, memory_key="chat_history", input_key="userResponse")
+# Per-user memory dictionary
+user_memories = {}
 
+def get_user_memory(user_id: str):
+    if user_id not in user_memories:
+        user_memories[user_id] = ConversationSummaryMemory(
+            llm=llm, memory_key="chat_history", input_key="userResponse"
+        )
+    return user_memories[user_id]
 
-# Define a chat prompt
+def clear_user_memory(user_id: str):
+    if user_id in user_memories:
+        user_memories[user_id].clear()
+
+# Prompt for free chat
 chat_prompt = PromptTemplate(
-    input_variables = ["userResponse", "chat_history"], 
+    input_variables=["userResponse", "chat_history"],
     template="""You are a master of conversation with a wide range of knowledge \
-    and interests. Your goal is to facilitate the user's interests and have a great coversation! \
-    Make the user feel like they are having a real worthwhile interaction, and whenever you can, \
-    help them learn something new and interesting!
-    
-    
-    Previous Conversation:
-    {chat_history}
-    
-    
-    Please respond to the user:
-    
-    {userResponse}"""
-    )
+and interests. Your goal is to facilitate the user's interests and have a great conversation! \
+Make the user feel like they are having a real worthwhile interaction, and whenever you can, \
+help them learn something new and interesting!
 
+Previous Conversation:
+{chat_history}
 
-#Create the chain
-chat_chain = LLMChain(llm=llm, prompt=chat_prompt, memory = memory)
+Please respond to the user:
 
+{userResponse}"""
+)
 
-# Function for interaction control
+# Interactive terminal-only mode (optional for local dev)
 def chatBot():
-    print("Welcome to the open chat with the AI Tutor! Type 'exit' to quit at any time. ")
-
+    print("Welcome to the open chat with the AI Tutor! Type 'exit' to quit at any time.")
     print("Start the conversation however you'd like!")
+
+    # Just use a placeholder test user for demo mode
+    memory = get_user_memory("test_user")
+    chat_chain = LLMChain(llm=llm, prompt=chat_prompt, memory=memory)
+
     while True:
-        #Take in user chat response
         user_response = input("\nYou: ")
-        
-        
-        #Exit if the user types 'exit'
+
         if user_response.lower() == 'exit':
             print("Thank you for learning with AI Tutor! Goodbye!")
             break
 
-        # AI Responds
-        chat_text = chat_chain.run({"userResponse": user_response})  # AI continues the conversation
+        chat_text = chat_chain.run({"userResponse": user_response})
         print("\nAI: " + chat_text)
-        
-        
 
-# Expose components for use in FastAPI
+# Expose components for FastAPI
 __all__ = [
-    "memory",
-    "chat_chain"
+    "llm",
+    "chat_prompt",
+    "get_user_memory",
+    "clear_user_memory"
 ]

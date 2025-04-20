@@ -1,5 +1,4 @@
-# main.py
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 import casualLearning
 import freeChat
@@ -7,13 +6,19 @@ import kidsLearning
 
 app = FastAPI()
 
-# Global quiz state
-last_quiz = ""
-last_quiz_feedback = ""
-last_quiz_grade = ""
-kids_last_quiz = ""
-kids_last_quiz_feedback = ""
-kids_last_quiz_grade = ""
+# Per-user quiz tracking
+user_quizzes = {}
+kids_user_quizzes = {}
+
+def get_user_quiz(user_id: str):
+    if user_id not in user_quizzes:
+        user_quizzes[user_id] = {"quiz": "", "feedback": "", "grade": ""}
+    return user_quizzes[user_id]
+
+def get_kids_user_quiz(user_id: str):
+    if user_id not in kids_user_quizzes:
+        kids_user_quizzes[user_id] = {"quiz": "", "feedback": "", "grade": ""}
+    return kids_user_quizzes[user_id]
 
 # CORS settings
 app.add_middleware(
@@ -23,26 +28,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # ********* Casual Learning ***************
 
 @app.get("/intro")
-async def get_intro(subject: str = "Astronomy"):
+async def get_intro(subject: str = "Astronomy", x_user_id: str = Header(...)):
     try:
+        memory = casualLearning.get_user_memory(x_user_id)
         intro_text = casualLearning.intro_chain.run({"subject": subject})
-        casualLearning.memory.save_context({"userResponse": ""}, {"chat_history": intro_text})
+        memory.save_context({"userResponse": ""}, {"chat_history": intro_text})
         return {"message": intro_text}
     except Exception as e:
         return {"error": str(e)}
 
 @app.post("/chat")
-async def post_chat(request: Request, subject: str = "Astronomy"):
+async def post_chat(request: Request, subject: str = "Astronomy", x_user_id: str = Header(...)):
     data = await request.json()
     user_message = data.get("message", "")
     if not user_message:
         return {"error": "Missing 'message'"}
     try:
-        response_text = casualLearning.response_chain.run({
+        memory = casualLearning.get_user_memory(x_user_id)
+        response_chain = casualLearning.LLMChain(
+            llm=casualLearning.llm,
+            prompt=casualLearning.response_prompt,
+            memory=memory
+        )
+        response_text = response_chain.run({
             "subject": subject,
             "userResponse": user_message
         })
@@ -50,97 +61,123 @@ async def post_chat(request: Request, subject: str = "Astronomy"):
     except Exception as e:
         return {"error": str(e)}
 
-@app.get("/quiz/start")
-async def start_quiz(subject: str = "Astronomy"):
-    global last_quiz
+@app.post("/memory/clear")
+async def clear_memory(x_user_id: str = Header(...)):
     try:
-        last_quiz = casualLearning.quizGen_chain.run({
+        casualLearning.clear_user_memory(x_user_id)
+        return {"status": "Memory cleared"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/quiz/start")
+async def start_quiz(subject: str = "Astronomy", x_user_id: str = Header(...)):
+    try:
+        memory = casualLearning.get_user_memory(x_user_id)
+        quiz_data = get_user_quiz(x_user_id)
+        quiz_data["quiz"] = casualLearning.quizGen_chain.run({
             "subject": subject,
-            "previousChat": casualLearning.memory.chat_memory
+            "previousChat": memory.chat_memory
         })
-        return {"quiz": last_quiz}
+        return {"quiz": quiz_data["quiz"]}
     except Exception as e:
         return {"error": str(e)}
 
 @app.post("/quiz/submit")
-async def submit_quiz(request: Request, subject: str = "Astronomy"):
-    global last_quiz_feedback, last_quiz_grade
+async def submit_quiz(request: Request, subject: str = "Astronomy", x_user_id: str = Header(...)):
     data = await request.json()
     answers = data.get("answers", [])
     if not isinstance(answers, list) or len(answers) != 5:
         return {"error": "Expected 'answers' as a list of 5 answers"}
     try:
-        last_quiz_feedback = casualLearning.quizFeedback_chain.run({
+        memory = casualLearning.get_user_memory(x_user_id)
+        quiz_data = get_user_quiz(x_user_id)
+        quiz_data["feedback"] = casualLearning.quizFeedback_chain.run({
             "subject": subject,
-            "previousChat": casualLearning.memory.chat_memory,
-            "generatedQuiz": last_quiz,
+            "previousChat": memory.chat_memory,
+            "generatedQuiz": quiz_data["quiz"],
             "userAnswers": answers
         })
-        last_quiz_grade = casualLearning.quizGrade_chain.run({
+        quiz_data["grade"] = casualLearning.quizGrade_chain.run({
             "subject": subject,
-            "quizFeedback": last_quiz_feedback
+            "quizFeedback": quiz_data["feedback"]
         })
         return {
-            "feedback": last_quiz_feedback,
-            "grade": last_quiz_grade
+            "feedback": quiz_data["feedback"],
+            "grade": quiz_data["grade"]
         }
     except Exception as e:
         return {"error": str(e)}
 
 @app.get("/continue")
-async def continue_lesson(subject: str = "Astronomy"):
+async def continue_lesson(subject: str = "Astronomy", x_user_id: str = Header(...)):
     try:
+        memory = casualLearning.get_user_memory(x_user_id)
+        quiz_data = get_user_quiz(x_user_id)
         continuation = casualLearning.continueIntro_chain.run({
             "subject": subject,
-            "quizFeedback": last_quiz_feedback,
-            "quizGrade": last_quiz_grade,
-            "chat_history": casualLearning.memory.chat_memory
+            "quizFeedback": quiz_data["feedback"],
+            "quizGrade": quiz_data["grade"],
+            "chat_history": memory.chat_memory
         })
-        casualLearning.memory.save_context({"userResponse": ""}, {"chat_history": continuation})
+        memory.save_context({"userResponse": ""}, {"chat_history": continuation})
         return {"message": continuation}
     except Exception as e:
         return {"error": str(e)}
 
-
 # ********* Free Chat ***************
 
 @app.post("/free_chat")
-async def post_free_chat(request: Request):
+async def post_free_chat(request: Request, x_user_id: str = Header(...)):
     data = await request.json()
     user_message = data.get("message", "")
     if not user_message:
         return {"error": "Missing 'message'"}
     try:
-        chat_text = freeChat.chat_chain.run({
-            "userResponse": user_message
-        })
+        memory = freeChat.get_user_memory(x_user_id)
+        chat_chain = freeChat.LLMChain(
+            llm=freeChat.llm,
+            prompt=freeChat.chat_prompt,
+            memory=memory
+        )
+        chat_text = chat_chain.run({"userResponse": user_message})
         return {"message": chat_text}
     except Exception as e:
         return {"error": str(e)}
 
-
-
+@app.post("/free_chat/memory/clear")
+async def clear_free_chat_memory(x_user_id: str = Header(...)):
+    try:
+        freeChat.clear_user_memory(x_user_id)
+        return {"status": "Free chat memory cleared"}
+    except Exception as e:
+        return {"error": str(e)}
 
 # ********** Kids Mode *************
 
-
 @app.get("/kids_intro")
-async def kids_get_intro(subject: str = "Nature"):
+async def kids_get_intro(subject: str = "Nature", x_user_id: str = Header(...)):
     try:
+        memory = kidsLearning.get_user_memory(x_user_id)
         kids_intro_text = kidsLearning.kids_intro_chain.run({"subject": subject})
-        kidsLearning.memory.save_context({"userResponse": ""}, {"chat_history": kids_intro_text})
+        memory.save_context({"userResponse": ""}, {"chat_history": kids_intro_text})
         return {"message": kids_intro_text}
     except Exception as e:
         return {"error": str(e)}
 
 @app.post("/kids_chat")
-async def kids_post_chat(request: Request, subject: str = "Nature"):
+async def kids_post_chat(request: Request, subject: str = "Nature", x_user_id: str = Header(...)):
     data = await request.json()
     user_message = data.get("message", "")
     if not user_message:
         return {"error": "Missing 'message'"}
     try:
-        kids_response_text = kidsLearning.kids_response_chain.run({
+        memory = kidsLearning.get_user_memory(x_user_id)
+        response_chain = kidsLearning.LLMChain(
+            llm=kidsLearning.llm,
+            prompt=kidsLearning.kids_response_prompt,
+            memory=memory
+        )
+        kids_response_text = response_chain.run({
             "subject": subject,
             "userResponse": user_message
         })
@@ -148,54 +185,65 @@ async def kids_post_chat(request: Request, subject: str = "Nature"):
     except Exception as e:
         return {"error": str(e)}
 
-@app.get("/kids_quiz/start")
-async def kids_start_quiz(subject: str = "Nature"):
-    global kids_last_quiz
+@app.post("/kids_memory/clear")
+async def clear_kids_memory(x_user_id: str = Header(...)):
     try:
-        kids_last_quiz = kidsLearning.kids_quizGen_chain.run({
+        kidsLearning.clear_user_memory(x_user_id)
+        return {"status": "Kids memory cleared"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/kids_quiz/start")
+async def kids_start_quiz(subject: str = "Nature", x_user_id: str = Header(...)):
+    try:
+        memory = kidsLearning.get_user_memory(x_user_id)
+        quiz_data = get_kids_user_quiz(x_user_id)
+        quiz_data["quiz"] = kidsLearning.kids_quizGen_chain.run({
             "subject": subject,
-            "previousChat": kidsLearning.memory.chat_memory
+            "previousChat": memory.chat_memory
         })
-        return {"quiz": kids_last_quiz}
+        return {"quiz": quiz_data["quiz"]}
     except Exception as e:
         return {"error": str(e)}
 
 @app.post("/kids_quiz/submit")
-async def kids_submit_quiz(request: Request, subject: str = "Nature"):
-    global kids_last_quiz_feedback, kids_last_quiz_grade
+async def kids_submit_quiz(request: Request, subject: str = "Nature", x_user_id: str = Header(...)):
     data = await request.json()
     answers = data.get("answers", [])
     if not isinstance(answers, list) or len(answers) != 5:
         return {"error": "Expected 'answers' as a list of 5 answers"}
     try:
-        kids_last_quiz_feedback = kidsLearning.kids_quizFeedback_chain.run({
+        memory = kidsLearning.get_user_memory(x_user_id)
+        quiz_data = get_kids_user_quiz(x_user_id)
+        quiz_data["feedback"] = kidsLearning.kids_quizFeedback_chain.run({
             "subject": subject,
-            "previousChat": kidsLearning.memory.chat_memory,
-            "generatedQuiz": kids_last_quiz,
+            "previousChat": memory.chat_memory,
+            "generatedQuiz": quiz_data["quiz"],
             "userAnswers": answers
         })
-        kids_last_quiz_grade = kidsLearning.kids_quizGrade_chain.run({
+        quiz_data["grade"] = kidsLearning.kids_quizGrade_chain.run({
             "subject": subject,
-            "quizFeedback": kids_last_quiz_feedback
+            "quizFeedback": quiz_data["feedback"]
         })
         return {
-            "feedback": kids_last_quiz_feedback,
-            "grade": kids_last_quiz_grade
+            "feedback": quiz_data["feedback"],
+            "grade": quiz_data["grade"]
         }
     except Exception as e:
         return {"error": str(e)}
 
 @app.get("/kids_continue")
-async def kids_continue_lesson(subject: str = "Nature"):
+async def kids_continue_lesson(subject: str = "Nature", x_user_id: str = Header(...)):
     try:
+        memory = kidsLearning.get_user_memory(x_user_id)
+        quiz_data = get_kids_user_quiz(x_user_id)
         kids_continuation = kidsLearning.kids_continueIntro_chain.run({
             "subject": subject,
-            "quizFeedback": kids_last_quiz_feedback,
-            "quizGrade": kids_last_quiz_grade,
-            "chat_history": kidsLearning.memory.chat_memory
+            "quizFeedback": quiz_data["feedback"],
+            "quizGrade": quiz_data["grade"],
+            "chat_history": memory.chat_memory
         })
-        kidsLearning.memory.save_context({"userResponse": ""}, {"chat_history": kids_continuation})
+        memory.save_context({"userResponse": ""}, {"chat_history": kids_continuation})
         return {"message": kids_continuation}
     except Exception as e:
         return {"error": str(e)}
-
