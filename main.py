@@ -28,6 +28,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Simple status check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+
 # ********* Casual Learning ***************
 
 @app.get("/intro")
