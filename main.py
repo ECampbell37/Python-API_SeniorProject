@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import casualLearning
 import freeChat
 import kidsLearning
+import professionalLearning
+
 
 app = FastAPI()
 
@@ -253,3 +255,28 @@ async def kids_continue_lesson(subject: str = "Nature", x_user_id: str = Header(
         return {"message": kids_continuation}
     except Exception as e:
         return {"error": str(e)}
+
+
+
+# ********** Professional Mode *************
+
+@app.post("/professional_chat")
+async def post_professional_chat(request: Request, x_user_id: str = Header(...)):
+    data = await request.json()
+    user_message = data.get("message", "")
+    if not user_message:
+        return {"error": "Missing 'message'"}
+    try:
+        memory = professionalLearning.get_user_memory(x_user_id)
+        chat_chain = professionalLearning.LLMChain(
+            llm=professionalLearning.response_chain.llm,
+            prompt=professionalLearning.response_chain.prompt,
+            memory=memory
+        )
+        response_text = chat_chain.run({
+            "userResponse": user_message,
+        })
+        return {"message": response_text}
+    except Exception as e:
+        return {"error": str(e)}
+
