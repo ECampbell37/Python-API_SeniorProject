@@ -268,11 +268,16 @@ async def post_professional_chat(request: Request, x_user_id: str = Header(...))
         return {"error": "Missing 'message'"}
     try:
         memory = professionalLearning.get_user_memory(x_user_id)
-        pro_response_text = professionalLearning.response_chain.run({
+        chat_chain = professionalLearning.LLMChain(
+            llm=professionalLearning.response_chain.llm,
+            prompt=professionalLearning.response_chain.prompt,
+            memory=memory
+        )
+        response_text = chat_chain.run({
             "userResponse": user_message,
             "chat_history": memory.chat_memory
         })
-        return {"message": pro_response_text}
+        return {"message": response_text}
     except Exception as e:
         return {"error": str(e)}
 

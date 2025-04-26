@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Define the GPT Model
-llm_model = "gpt-4"
+llm_model = "gpt-4o"
 llm = ChatOpenAI(temperature=0.7, model=llm_model)
 
 # Per-user memory dictionary
