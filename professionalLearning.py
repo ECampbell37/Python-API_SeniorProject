@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 
 # Load API key and set model
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-llm_model = "gpt-3.5"
+llm_model = "gpt-4"
 
 llm = ChatOpenAI(temperature=0.5, model=llm_model, streaming=True)
 
