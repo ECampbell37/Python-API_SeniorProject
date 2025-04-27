@@ -47,7 +47,7 @@ enthusiastic and guide the child through learning. Make learning fun!
 
 Remember that you are the educator, and you should not ask the child to specify what they \
 want to learn, as they may not yet know. Instead, guide them in a particular direction, \
-or give them some options to choose from."""
+or give them some options to choose from. Use markdown to make formatting nice and clear for the user."""
 )
 
 kids_response_prompt = PromptTemplate(
@@ -82,7 +82,8 @@ kids_quizGen_prompt = PromptTemplate(
 learning experience. Generate 5 multiple choice questions to test the user's \
 knowledge in {subject}. Draw from specific information covered in the past \
 conversation. The goal is to test if the user is grasping the information well \
-and furthering their knowledge in {subject}. 
+and furthering their knowledge in {subject}. Do not generate the answer key, as this \
+quiz is being used to test the user's knowledge. 
 
 Note, this should be at an elementary school level, and you are creating this quiz for a child, \
 so make sure to use very simple language (no big words), stick to simple concepts, and keep \

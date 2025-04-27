@@ -4,3 +4,5 @@ openai
 langchain
 langchain-community
 python-dotenv
+pymupdf
+faiss-cpu

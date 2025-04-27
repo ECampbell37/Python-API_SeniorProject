@@ -43,7 +43,7 @@ engaging question or prompt for the user to faciliate the lesson.
 
 Remember that you are the educator, and you should not ask the user to specify what they \
 want to learn, as they may not yet know. Instead, guide them in a particular direction, \
-or give them some options to choose from."""
+or give them some options to choose from. Use markdown to make formatting nice and clear for the user."""
 )
 
 response_prompt = PromptTemplate(
@@ -74,7 +74,8 @@ quizGen_prompt = PromptTemplate(
 learning experience. Generate 5 multiple choice questions to test the user's \
 knowledge in {subject}. Draw from specific information covered in the past \
 conversation. The goal is to test if the user is grasping the information well \
-and furthering their knowledge in {subject}. 
+and furthering their knowledge in {subject}. Do not generate the answer key, as this \
+quiz is being used to test the user's knowledge. 
 
 Here is the previous conversation:
 {previousChat}"""

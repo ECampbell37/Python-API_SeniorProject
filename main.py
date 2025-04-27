@@ -4,6 +4,9 @@ import casualLearning
 import freeChat
 import kidsLearning
 import professionalLearning
+import pdfLearning
+from fastapi import File, UploadFile, Header
+
 
 
 app = FastAPI()
@@ -278,6 +281,38 @@ async def post_professional_chat(request: Request, x_user_id: str = Header(...))
             "chat_history": memory.chat_memory
         })
         return {"message": response_text}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+
+# ********** PDF Reader Mode *************
+
+@app.post("/pdf/upload")
+async def pdf_upload(file: UploadFile = File(...), x_user_id: str = Header(...)):
+    try:
+        pdfLearning.handle_pdf_upload(file, x_user_id)
+        return {"status": "PDF uploaded and processed successfully."}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/pdf/ask")
+async def pdf_ask_question(request: Request, x_user_id: str = Header(...)):
+    data = await request.json()
+    question = data.get("message", "")
+    if not question:
+        return {"error": "Missing 'message'"}
+    try:
+        answer = pdfLearning.handle_pdf_question(question, x_user_id)
+        return {"message": answer}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/pdf/memory/clear")
+async def pdf_clear_memory(x_user_id: str = Header(...)):
+    try:
+        pdfLearning.clear_user_pdf_chain(x_user_id)
+        return {"status": "PDF memory cleared"}
     except Exception as e:
         return {"error": str(e)}
 
