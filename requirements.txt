@@ -7,3 +7,4 @@ python-dotenv
 pymupdf
 faiss-cpu
 python-multipart
+tiktoken

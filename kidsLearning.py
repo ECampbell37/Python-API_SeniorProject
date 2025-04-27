@@ -48,7 +48,7 @@ enthusiastic and guide the child through learning. Make learning fun!
 Remember that you are the educator, and you should not ask the child to specify what they \
 want to learn, as they may not yet know. Instead, guide them in a particular direction, \
 or give them some options to choose from. Use markdown to make formatting nice and clear \
-for the child. The intro should be in the format Overview -> Topics -> Question."""
+for the child. The intro should be in the format Intro -> Possible Topics -> Discussion Question."""
 )
 
 kids_response_prompt = PromptTemplate(

@@ -44,7 +44,7 @@ engaging question or prompt for the user to faciliate the lesson.
 Remember that you are the educator, and you should not ask the user to specify what they \
 want to learn, as they may not yet know. Instead, guide them in a particular direction, \
 or give them some options to choose from. Use markdown to make formatting nice and clear \
-for the user. The intro should be in the format Overview -> Topics -> Question."""
+for the user. The intro should be in the format Intro -> Possible Topics -> Discussion Question."""
 )
 
 response_prompt = PromptTemplate(
