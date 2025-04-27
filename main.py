@@ -291,10 +291,13 @@ async def post_professional_chat(request: Request, x_user_id: str = Header(...))
 @app.post("/pdf/upload")
 async def pdf_upload(file: UploadFile = File(...), x_user_id: str = Header(...)):
     try:
-        pdfLearning.handle_pdf_upload(file, x_user_id)
+        contents = await file.read()
+        pdfLearning.handle_pdf_upload(contents, x_user_id)
+        await file.close()
         return {"status": "PDF uploaded and processed successfully."}
     except Exception as e:
         return {"error": str(e)}
+
 
 @app.post("/pdf/ask")
 async def pdf_ask_question(request: Request, x_user_id: str = Header(...)):
@@ -307,6 +310,7 @@ async def pdf_ask_question(request: Request, x_user_id: str = Header(...)):
         return {"message": answer}
     except Exception as e:
         return {"error": str(e)}
+
 
 @app.post("/pdf/memory/clear")
 async def pdf_clear_memory(x_user_id: str = Header(...)):
