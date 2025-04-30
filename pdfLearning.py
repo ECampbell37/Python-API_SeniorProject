@@ -2,7 +2,7 @@
 
 import os
 import tempfile
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
@@ -31,7 +31,7 @@ def handle_pdf_upload(contents: bytes, user_id: str):
         tmp.write(contents)
         tmp_path = tmp.name
 
-    loader = PyPDFLoader(tmp_path)
+    loader = PyMuPDFLoader(tmp_path)
     docs = loader.load()
 
     splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)

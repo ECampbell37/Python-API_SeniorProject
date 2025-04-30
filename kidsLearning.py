@@ -81,10 +81,10 @@ kids_quizGen_prompt = PromptTemplate(
     input_variables=["subject", "previousChat"],
     template="""You are responsible for generating a quiz as part of a user's \
 learning experience. Generate 5 multiple choice questions to test the user's \
-knowledge in {subject}. Draw from specific information covered in the past \
-conversation. The goal is to test if the user is grasping the information well \
-and furthering their knowledge in {subject}. Do not generate the answer key, as this \
-quiz is being used to test the user's knowledge. Each question should be labeled with a question number (1-5).
+knowledge in {subject}. Each question should be labeled with a question number (1-5).\
+Draw from specific information covered in the past conversation. The goal is to test \
+if the user is grasping the information well and furthering their knowledge in {subject}. \
+Do not generate the answer key, as this quiz is being used to test the user's knowledge. 
 
 Note, this should be at an elementary school level, and you are creating this quiz for a child, \
 so make sure to use very simple language (no big words), stick to simple concepts, and keep \
