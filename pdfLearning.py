@@ -34,7 +34,7 @@ def handle_pdf_upload(contents: bytes, user_id: str):
     loader = PyPDFLoader(tmp_path)
     docs = loader.load()
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
     chunks = splitter.split_documents(docs)
 
     embeddings = OpenAIEmbeddings()
