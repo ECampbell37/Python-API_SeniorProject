@@ -286,6 +286,16 @@ async def post_professional_chat(request: Request, x_user_id: str = Header(...))
 
 
 
+@app.post("/professional_chat/memory/clear")
+async def clear_pro_chat_memory(x_user_id: str = Header(...)):
+    try:
+        professionalLearning.clear_user_memory(x_user_id)
+        return {"status": "Pro chat memory cleared"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+
 # ********** PDF Reader Mode *************
 
 @app.post("/pdf/upload")

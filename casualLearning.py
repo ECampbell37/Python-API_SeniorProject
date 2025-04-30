@@ -72,11 +72,11 @@ Please respond to the user:
 quizGen_prompt = PromptTemplate(
     input_variables=["subject", "previousChat"],
     template="""You are responsible for generating a quiz as part of a user's \
-learning experience. Generate 5 numbered multiple choice questions to test the user's \
+learning experience. Generate 5 multiple choice questions to test the user's \
 knowledge in {subject}. Draw from specific information covered in the past \
 conversation. The goal is to test if the user is grasping the information well \
 and furthering their knowledge in {subject}. Do not generate the answer key, as this \
-quiz is being used to test the user's knowledge. 
+quiz is being used to test the user's knowledge. Make sure the questions are numbered 1-5.
 
 Here is the previous conversation:
 {previousChat}"""
