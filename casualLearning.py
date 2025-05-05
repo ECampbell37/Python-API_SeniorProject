@@ -1,3 +1,14 @@
+'''
+*************************************************************
+* Name:    Elijah Campbell‑Ihim
+* Project: AI Tutor Python API
+* Class:   CMPS-450 Senior Project
+* Date:    May 2025
+* File:    casualLearning.py
+*************************************************************
+'''
+
+
 import os
 import warnings
 

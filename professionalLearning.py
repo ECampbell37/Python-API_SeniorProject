@@ -1,4 +1,12 @@
-# professionalLearning.py
+'''
+*************************************************************
+* Name:    Elijah Campbell‑Ihim
+* Project: AI Tutor Python API
+* Class:   CMPS-450 Senior Project
+* Date:    May 2025
+* File:    professionalLearning.py
+*************************************************************
+'''
 
 import os
 import warnings
@@ -55,7 +63,7 @@ AI:
 """
 )
 
-# Chain using the pro-level prompt
+# Chain using the professional prompt
 response_chain = LLMChain(llm=llm, prompt=pro_prompt)
 
 # --------------------- EXPORTS ----------------------

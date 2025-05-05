@@ -1,3 +1,13 @@
+'''
+*************************************************************
+* Name:    Elijah Campbell‑Ihim
+* Project: AI Tutor Python API
+* Class:   CMPS-450 Senior Project
+* Date:    May 2025
+* File:    freeChat.py
+*************************************************************
+'''
+
 import os
 import warnings
 
@@ -19,6 +29,7 @@ llm = ChatOpenAI(temperature=0.7, model=llm_model)
 # Per-user memory dictionary
 user_memories = {}
 
+#Gets specific user's memory
 def get_user_memory(user_id: str):
     if user_id not in user_memories:
         user_memories[user_id] = ConversationSummaryMemory(
@@ -26,9 +37,12 @@ def get_user_memory(user_id: str):
         )
     return user_memories[user_id]
 
+
+# Clears specific user's memory
 def clear_user_memory(user_id: str):
     if user_id in user_memories:
         user_memories[user_id].clear()
+
 
 # Prompt for free chat
 chat_prompt = PromptTemplate(
@@ -46,26 +60,8 @@ Please respond to the user:
 {userResponse}"""
 )
 
-# Interactive terminal-only mode (optional for local dev)
-def chatBot():
-    print("Welcome to the open chat with the AI Tutor! Type 'exit' to quit at any time.")
-    print("Start the conversation however you'd like!")
 
-    # Just use a placeholder test user for demo mode
-    memory = get_user_memory("test_user")
-    chat_chain = LLMChain(llm=llm, prompt=chat_prompt, memory=memory)
-
-    while True:
-        user_response = input("\nYou: ")
-
-        if user_response.lower() == 'exit':
-            print("Thank you for learning with AI Tutor! Goodbye!")
-            break
-
-        chat_text = chat_chain.run({"userResponse": user_response})
-        print("\nAI: " + chat_text)
-
-# Expose components for FastAPI
+# Export components for FastAPI
 __all__ = [
     "llm",
     "chat_prompt",

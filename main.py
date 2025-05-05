@@ -1,3 +1,13 @@
+'''
+*************************************************************
+* Name:    Elijah Campbell‑Ihim
+* Project: AI Tutor Python API
+* Class:   CMPS-450 Senior Project
+* Date:    May 2025
+* File:    main.py
+*************************************************************
+'''
+
 from fastapi import FastAPI, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 import casualLearning
