@@ -8,6 +8,23 @@
 *************************************************************
 '''
 
+
+
+################################################################################################
+# freeChat.py – Defines the open-ended conversation logic for AI Tutor's Free Chat Mode.
+#
+# This module sets up a flexible, user-friendly GPT-4o-mini LLM for simple, unstructured
+# dialogue with memory support. Users can chat about anything and receive meaningful,
+# engaging responses designed to educate and entertain.
+#
+# Exports:
+# - A conversation prompt template for unstructured chat
+# - Utility functions to manage per-user memory using LangChain's `ConversationSummaryMemory`
+# - The language model instance used in Free Chat
+################################################################################################
+
+
+
 import os
 import warnings
 
@@ -26,10 +43,16 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 llm_model = "gpt-4o-mini"
 llm = ChatOpenAI(temperature=0.7, model=llm_model)
 
-# Per-user memory dictionary
+
+# In-memory dictionary for storing user-specific memory
 user_memories = {}
 
-#Gets specific user's memory
+
+
+#####################################################################
+# Retrieves or creates conversation memory tied to a specific user.
+# Returns a ConversationSummaryMemory object used for dialogue recall.
+#####################################################################
 def get_user_memory(user_id: str):
     if user_id not in user_memories:
         user_memories[user_id] = ConversationSummaryMemory(
@@ -38,13 +61,20 @@ def get_user_memory(user_id: str):
     return user_memories[user_id]
 
 
-# Clears specific user's memory
+
+#####################################################################
+# Clears the existing memory for the specified user.
+#####################################################################
 def clear_user_memory(user_id: str):
     if user_id in user_memories:
         user_memories[user_id].clear()
 
 
-# Prompt for free chat
+
+# --------------------- PROMPT TEMPLATE ----------------------
+
+
+# Prompt for open-ended conversation mode
 chat_prompt = PromptTemplate(
     input_variables=["userResponse", "chat_history"],
     template="""You are a master of conversation with a wide range of knowledge \
@@ -61,7 +91,10 @@ Please respond to the user:
 )
 
 
-# Export components for FastAPI
+
+# --------------------- EXPORTS ----------------------
+
+
 __all__ = [
     "llm",
     "chat_prompt",

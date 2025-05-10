@@ -8,6 +8,22 @@
 *************************************************************
 '''
 
+
+
+
+################################################################################################
+# kidsLearning.py – Defines conversation logic and learning prompts for AI Tutor's Kids Mode.
+#
+# This module provides kid-friendly AI tutoring powered by GPT-4o-mini and LangChain.
+# Prompts are simplified, playful, and encouraging, designed to teach elementary-level learners.
+#
+# Exports:
+# - Chains and prompts for guiding, quizzing, and adjusting lessons for young students
+# - Functions for managing per-user memory via LangChain's `ConversationSummaryMemory`
+################################################################################################
+
+
+
 import os
 import warnings
 
@@ -26,9 +42,16 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 llm_model = "gpt-4o-mini"
 llm = ChatOpenAI(temperature=0.7, model=llm_model)
 
-# Per-user memory dictionary
+
+# Memory dictionary to store conversation history per user
 user_memories = {}
 
+
+
+#####################################################################
+# Retrieves or initializes memory for the given user.
+# Returns a ConversationSummaryMemory instance.
+#####################################################################
 def get_user_memory(user_id: str):
     if user_id not in user_memories:
         user_memories[user_id] = ConversationSummaryMemory(
@@ -36,12 +59,21 @@ def get_user_memory(user_id: str):
         )
     return user_memories[user_id]
 
+
+
+#####################################################################
+# Clears the conversation memory for the given user.
+#####################################################################
 def clear_user_memory(user_id: str):
     if user_id in user_memories:
         user_memories[user_id].clear()
 
+
+
 # --------------------- PROMPTS ----------------------
 
+
+# Intro prompt for kids — friendly, enthusiastic, and age-appropriate
 kids_intro_prompt = PromptTemplate(
     input_variables=["subject"],
     template="""You are an excellent, helpful elementary school educator, specializing in {subject}. \
@@ -61,6 +93,8 @@ or give them some options to choose from. Use markdown to make formatting nice a
 for the child. The intro should be in the format Intro -> Possible Topics -> Discussion Question."""
 )
 
+
+# Prompt for continuing kid-friendly conversation
 kids_response_prompt = PromptTemplate(
     input_variables=["subject", "userResponse", "chat_history"],
     template="""You are an excellent, helpful elementary school educator, specializing in {subject}. \
@@ -87,6 +121,8 @@ Please respond to the user:
 {userResponse}"""
 )
 
+
+# Prompt for generating a simple 5-question multiple choice quiz
 kids_quizGen_prompt = PromptTemplate(
     input_variables=["subject", "previousChat"],
     template="""You are responsible for generating a quiz as part of a user's \
@@ -104,6 +140,8 @@ Here is the previous conversation:
 {previousChat}"""
 )
 
+
+# Prompt for giving positive, simple quiz feedback
 kids_quizFeedback_prompt = PromptTemplate(
     input_variables=["subject", "previousChat", "generatedQuiz", "userAnswers"],
     template="""Your job is to provide feedback to the user's {subject} quiz results. \
@@ -127,6 +165,8 @@ Previous Coversation:
 {previousChat}"""
 )
 
+
+# Prompt for generating a score from the quiz results
 kids_quizGrade_prompt = PromptTemplate(
     input_variables=["subject", "quizFeedback"],
     template="""Your job is to grade the user's answers to a generated {subject} quiz. \
@@ -141,6 +181,8 @@ Here is the quiz feedback:
 {quizFeedback}"""
 )
 
+
+# Prompt for continuing the lesson based on performance
 kids_continueIntro_prompt = PromptTemplate(
     input_variables=["subject", "quizFeedback", "quizGrade", "chat_history"],
     template="""You are an excellent, helpful elementary school educator, specializing in {subject}. \
@@ -164,7 +206,10 @@ Here is the previous conversation history:
 {chat_history}"""
 )
 
+
+
 # --------------------- CHAINS ----------------------
+
 
 kids_intro_chain = LLMChain(llm=llm, prompt=kids_intro_prompt)
 kids_quizGen_chain = LLMChain(llm=llm, prompt=kids_quizGen_prompt)
@@ -172,7 +217,10 @@ kids_quizFeedback_chain = LLMChain(llm=llm, prompt=kids_quizFeedback_prompt)
 kids_quizGrade_chain = LLMChain(llm=llm, prompt=kids_quizGrade_prompt)
 kids_continueIntro_chain = LLMChain(llm=llm, prompt=kids_continueIntro_prompt)
 
-# --------------------- EXPORT ----------------------
+
+
+# --------------------- EXPORTS ----------------------
+
 
 __all__ = [
     "llm",
@@ -181,7 +229,7 @@ __all__ = [
     "kids_quizFeedback_chain",
     "kids_quizGrade_chain",
     "kids_continueIntro_chain",
-    "kids_response_prompt",  # used for response_chain per user
+    "kids_response_prompt", 
     "get_user_memory",
     "clear_user_memory"
 ]

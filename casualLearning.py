@@ -9,6 +9,24 @@
 '''
 
 
+################################################################################################
+# casualLearning.py – Defines the conversational logic and AI chains for AI Tutor's Casual Mode.
+
+# This module initializes a GPT-4o-mini LLM and provides reusable LangChain templates for:
+# - Introducing a learning topic
+# - Conversational educational dialogue
+# - Generating and grading quizzes
+# - Adjusting the lesson based on quiz results
+
+# It also manages per-user conversation memory using LangChain's `ConversationSummaryMemory`.
+
+# Exports:
+# - Prompt templates and LLMChains for casual learning sessions
+# - Utility functions for accessing and clearing memory
+################################################################################################
+
+
+
 import os
 import warnings
 
@@ -25,11 +43,16 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Define the GPT Model
 llm_model = "gpt-4o-mini"
-llm = ChatOpenAI(temperature=0.7, model=llm_model, streaming=True)
+llm = ChatOpenAI(temperature=0.7, model=llm_model)
 
-# Per-user memory dictionary
+# Memory dictionary for tracking user-specific conversation context
 user_memories = {}
 
+
+#####################################################################
+# Retrieve or initialize a conversation memory for the given user ID.
+# Returns a ConversationSummaryMemory object tied to the user.
+####################################################################
 def get_user_memory(user_id: str):
     if user_id not in user_memories:
         user_memories[user_id] = ConversationSummaryMemory(
@@ -37,12 +60,20 @@ def get_user_memory(user_id: str):
         )
     return user_memories[user_id]
 
+
+
+#####################################################################
+# Clears the memory for ge specified user ID, if it exists. 
+####################################################################
 def clear_user_memory(user_id: str):
     if user_id in user_memories:
         user_memories[user_id].clear()
 
+
 # --------------------- PROMPTS ----------------------
 
+
+# Prompt for initial subject overview and introduction
 intro_prompt = PromptTemplate(
     input_variables=["subject"],
     template="""You are an excellent, helpful educator, specializing in {subject}. \
@@ -58,6 +89,8 @@ or give them some options to choose from. Use markdown to make formatting nice a
 for the user. The intro should be in the format Intro -> Possible Topics -> Discussion Question."""
 )
 
+
+# Prompt for continually responding to the user throughout lesson
 response_prompt = PromptTemplate(
     input_variables=["subject", "userResponse", "chat_history"],
     template="""You are an excellent, helpful educator, specializing in {subject}. \
@@ -80,6 +113,8 @@ Please respond to the user:
 {userResponse}"""
 )
 
+
+# Prompt for generating a quiz from prior conversation history
 quizGen_prompt = PromptTemplate(
     input_variables=["subject", "previousChat"],
     template="""You are responsible for generating a quiz as part of a user's \
@@ -93,6 +128,8 @@ Here is the previous conversation:
 {previousChat}"""
 )
 
+
+# Prompt for generating descriptive quiz feedback
 quizFeedback_prompt = PromptTemplate(
     input_variables=["subject", "previousChat", "generatedQuiz", "userAnswers"],
     template="""Your job is to provide feedback to the user's {subject} quiz results. \
@@ -113,6 +150,8 @@ Previous Coversation:
 {previousChat}"""
 )
 
+
+# Prompt for generating a quiz grade
 quizGrade_prompt = PromptTemplate(
     input_variables=["subject", "quizFeedback"],
     template="""Your job is to grade the user's answers to a generated {subject} quiz. \
@@ -127,6 +166,8 @@ Here is the quiz feedback:
 {quizFeedback}"""
 )
 
+
+# Prompt for post-quiz continuation, adjusting the lesson based on quiz results
 continueIntro_prompt = PromptTemplate(
     input_variables=["subject", "quizFeedback", "quizGrade", "chat_history"],
     template="""You are an excellent, helpful educator, specializing in {subject}. \
@@ -150,15 +191,20 @@ Here is the previous conversation history:
 {chat_history}"""
 )
 
+
 # --------------------- CHAINS ----------------------
 
+
+# Chains for executing the prompts with the LLM
 intro_chain = LLMChain(llm=llm, prompt=intro_prompt)
 quizGen_chain = LLMChain(llm=llm, prompt=quizGen_prompt)
 quizFeedback_chain = LLMChain(llm=llm, prompt=quizFeedback_prompt)
 quizGrade_chain = LLMChain(llm=llm, prompt=quizGrade_prompt)
 continueIntro_chain = LLMChain(llm=llm, prompt=continueIntro_prompt)
 
+
 # --------------------- EXPORT ----------------------
+
 
 __all__ = [
     "llm",
@@ -167,7 +213,7 @@ __all__ = [
     "quizFeedback_chain",
     "quizGrade_chain",
     "continueIntro_chain",
-    "response_prompt",  # used to create memory-linked response_chain per user
+    "response_prompt",
     "get_user_memory",
     "clear_user_memory"
 ]

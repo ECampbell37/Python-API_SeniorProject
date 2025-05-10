@@ -8,6 +8,29 @@
 *************************************************************
 '''
 
+
+
+################################################################################################
+# pdfLearning.py – Manages PDF-based learning mode in AI Tutor.
+#
+# This module allows users to upload a PDF document, processes its content into a vector store,
+# and creates a ConversationalRetrievalChain that lets the AI answer questions based on the file.
+#
+# Features:
+# - Parses uploaded PDF files using PyMuPDF
+# - Splits text into chunks for embedding
+# - Uses OpenAI embeddings and FAISS vector store
+# - Tracks conversation history per user with memory
+#
+# Exports:
+# - handle_pdf_upload        -> Process and store PDF content for retrieval
+# - handle_pdf_question      -> Ask questions against the uploaded PDF
+# - get_user_pdf_chain       -> Retrieve user's active PDF chain
+# - clear_user_pdf_chain     -> Clear/reset a user's uploaded PDF chain
+################################################################################################
+
+
+
 import os
 import tempfile
 from langchain_community.document_loaders import PyMuPDFLoader
@@ -25,37 +48,55 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 llm_model = "gpt-4o-mini"
 llm = ChatOpenAI(temperature=0.3, model=llm_model)
 
-# In-memory dictionary to store each user's personalized PDF chain
+# Dictionary to store each user's conversational retrieval chain
 user_pdf_chains = {}
 
 
-# Retrieve an existing ConversationalRetrievalChain for a user
+
+#####################################################################
+# Retrieves the user's active ConversationalRetrievalChain instance.
+# Raises an error if no PDF has been uploaded yet.
+#####################################################################
 def get_user_pdf_chain(user_id: str):
     if user_id not in user_pdf_chains:
         raise ValueError("No uploaded PDF for this user.")
     return user_pdf_chains[user_id]
 
 
-# Clear the stored PDF chain for a user (e.g., on logout or file reset)
+
+#####################################################################
+# Clears the stored PDF chain for a user, useful on logout/reset.
+#####################################################################
 def clear_user_pdf_chain(user_id: str):
     if user_id in user_pdf_chains:
         del user_pdf_chains[user_id]
 
 
-# Handle the PDF file upload, process it into searchable chunks, and store the chain
+
+#####################################################################
+# Handles a new PDF file upload:
+# - Saves the file temporarily
+# - Loads and splits the document into chunks
+# - Embeds the content using OpenAI embeddings
+# - Stores a retriever-backed conversation chain for the user
+#####################################################################
 def handle_pdf_upload(contents: bytes, user_id: str):
+    
     # Save the uploaded PDF to a temporary file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(contents)
         tmp_path = tmp.name
 
-    # Load and parse the PDF into documents
+
+    # Load and parse the PDF
     loader = PyMuPDFLoader(tmp_path)
     docs = loader.load()
 
-    # Split the documents into manageable chunks for embedding
+
+    # Split the text into manageable chunks
     splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
     chunks = splitter.split_documents(docs)
+
 
     # Convert chunks into vector embeddings and store them in FAISS vector store
     embeddings = OpenAIEmbeddings()
@@ -83,11 +124,16 @@ def handle_pdf_upload(contents: bytes, user_id: str):
     os.remove(tmp_path)
 
 
-# Handle a user's question about their uploaded PDF by invoking the chain
+
+#####################################################################
+# Handles a user's question by invoking their active PDF chain.
+# Returns the AI's answer from the PDF-based retriever.
+#####################################################################
 def handle_pdf_question(question: str, user_id: str):
     chain = get_user_pdf_chain(user_id)
     result = chain.invoke({"question": question})
     return result["answer"]
+
 
 
 # Exported functions from this module

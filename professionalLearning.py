@@ -8,6 +8,21 @@
 *************************************************************
 '''
 
+
+
+################################################################################################
+# professionalLearning.py – Manages conversation logic for AI Tutor's Professional Mode.
+#
+# This module configures an advanced AI tutor powered by GPT-4o-mini for technical, academic,
+# or highly specific domains. It supports clear markdown formatting, LaTeX math rendering,
+# and multi-language code block responses for professional and scholarly users.
+#
+# Exports:
+# - A memory-aware response chain for dynamic dialogue
+# - Functions for managing per-user conversation memory
+################################################################################################
+
+
 import os
 import warnings
 from langchain.chains import LLMChain
@@ -21,11 +36,18 @@ warnings.filterwarnings("ignore")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 llm_model = "gpt-4o-mini"
 
-llm = ChatOpenAI(temperature=0.5, model=llm_model, streaming=True)
+# Initialize the LLM model (with slighly slower temperature for clarity and precision)
+llm = ChatOpenAI(temperature=0.5, model=llm_model)
 
-# Per-user memory dictionary
+
+# Dictionary to manage user-specific conversation memory
 user_memories = {}
 
+
+#####################################################################
+# Retrieves or initializes conversation memory for the given user ID.
+# Returns a LangChain ConversationSummaryMemory object.
+#####################################################################
 def get_user_memory(user_id: str):
     if user_id not in user_memories:
         user_memories[user_id] = ConversationSummaryMemory(
@@ -35,12 +57,20 @@ def get_user_memory(user_id: str):
         )
     return user_memories[user_id]
 
+
+
+#####################################################################
+# Clears the conversation memory for the specified user, if it exists.
+#####################################################################
 def clear_user_memory(user_id: str):
     if user_id in user_memories:
         user_memories[user_id].clear()
 
+
+
 # --------------------- PROMPT ----------------------
 
+# Prompt for professional-style tutoring and technical formatting
 pro_prompt = PromptTemplate(
     input_variables=["userResponse", "chat_history"],
     template="""
@@ -63,10 +93,13 @@ AI:
 """
 )
 
+
 # Chain using the professional prompt
 response_chain = LLMChain(llm=llm, prompt=pro_prompt)
 
+
 # --------------------- EXPORTS ----------------------
+
 
 __all__ = [
     "llm",
