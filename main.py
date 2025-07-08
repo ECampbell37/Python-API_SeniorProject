@@ -71,10 +71,14 @@ def get_kids_user_quiz(user_id: str):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://ai-tutor-senior-project.vercel.app"
+    ],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-User-Id"],
 )
+
 
 
 #############################################
