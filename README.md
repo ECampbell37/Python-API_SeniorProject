@@ -11,7 +11,7 @@ This repository contains the backend API for the [AI Tutor](https://ai-tutor-sen
 - Professional mode with Markdown and LaTeX support
 - User progress tracking and badge awarding
 
-The frontend communicates with this API to deliver a seamless and interactive learning experience.
+The [frontend](https://github.com/ECampbell37/AI_Tutor_SeniorProject) communicates with this API to deliver a seamless, interactive learning experience.
 
 ---
 
@@ -66,7 +66,7 @@ pip install -r requirements.txt
 
 ### 4. Set Up Environment Variables
 
-Create a `.env` file in the root directory and add your OpenAI API key:
+Create a `.env` file in the `python-api` root directory and add your OpenAI API key:
 
 ```
 OPENAI_API_KEY=your_openai_api_key
