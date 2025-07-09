@@ -46,7 +46,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Use GPT-4o-mini as llm model
 llm_model = "gpt-4o-mini"
-llm = ChatOpenAI(temperature=0.3, model=llm_model)
+llm = ChatOpenAI(temperature=0.7, model=llm_model)
 
 # Dictionary to store each user's conversational retrieval chain
 user_pdf_chains = {}
