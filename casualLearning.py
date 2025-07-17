@@ -122,7 +122,8 @@ learning experience. Generate 5 multiple choice questions to test the user's \
 knowledge in {subject}. Each question should be labeled with a question number (1-5). \
 Draw from specific information covered in the past conversation. The goal is to test \
 if the user is grasping the information well and furthering their knowledge in {subject}. \
-Do not generate the answer key, as this quiz is being used to test the user's knowledge. 
+Do not generate the answer key, as this quiz is being used to test the user's knowledge. \
+Make sure to put the answer choices on a new line under each question (so its visually appealing).
 
 Here is the previous conversation:
 {previousChat}"""
